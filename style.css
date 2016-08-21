@@ -1,0 +1,36 @@
+* {
+    font-family: 'Open Sans',FontAwesome,'Hiragino Kaku Gothic ProN',Meiryo,'MS PGothic',Sans-serif;
+}
+
+h2 {
+    margin-bottom: 0;
+    font-size: 1.2em;
+}
+
+.remoteVideos {
+    transform: scaleX(-1);
+}
+
+#video-container {
+}
+
+#step1-error, #step2, #step3 {
+    display: none;
+}
+#my-id {
+    font-weight: bold;
+}
+
+#their-videos div {
+    float: left;
+    margin: 5px;
+}
+
+label {
+    top: -72px;
+    left: 24px;
+    z-index: 10;
+    color: white;
+    position: relative;
+    text-shadow: -1px -1px #000, 1px -1px #000, -1px 1px #000, 1px 1px #000;
+}

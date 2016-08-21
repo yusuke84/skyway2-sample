@@ -1,0 +1,152 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>SkyWay - Video chat example</title>
+    <link rel="stylesheet" href="../style.css">
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8/jquery.min.js"></script>
+    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+    <script type="text/javascript" src="https://cdn.skyway.io/skyway.js"></script>
+    <script>
+        // Compatibility shim
+        navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+        // Peer object
+        var peer = new Peer({
+            key: 'eab4a7c9-3cea-4427-ad6d-d802cb091c40',
+            debug: 3
+        });
+        var room;
+        peer.on('open', function(){
+            $('#my-id').text(peer.id);
+
+            // Get things started
+            step1();
+        });
+        peer.on('error', function(err){
+            alert(err.message);
+            // Return to step 2 if error occurs
+            step2();
+        });
+
+        var count = 0;
+
+        function join() {
+            var confMode = location.pathname.split('/')[1];
+            if(confMode !== 'sfu' && confMode !== 'mesh') {
+                confMode = 'mesh';
+            }
+            $("#conf-mode").text('Conf Mode:' + confMode);
+            var roomName = location.pathname.split('/')[2];
+            if (!roomName) {
+                return;
+            }
+            room = peer.joinRoom(confMode + '_video_' + roomName, {mode: confMode});
+
+            $('#room-id').text('Room Name:' + roomName);
+
+            if(confMode === 'sfu'){
+                step3Sfu(room);
+            }else if(confMode === 'mesh'){
+                step3Mesh(room);
+            }
+        }
+
+        function step1 () {
+            console.log('step1');
+            // Get audio/video stream
+            navigator.getUserMedia({audio: false,  video: { width: 160, height: 90 } }, function(stream){
+                // Set your video displays
+
+                $('#their-videos').append($(
+                        '<div>' +
+                        '<label id="label_' + peer.id + '">' + count + '</label>' +
+                        '<video autoplay class="remoteVideos" src="' + URL.createObjectURL(stream) + '" id="video_' + peer.id + '">' +
+                        '</div>'));
+                // $('#my-video').prop('src', URL.createObjectURL(stream));
+                window.localStream = stream;
+                step2();
+            }, function(){ $('#step1-error').show(); });
+        }
+        function step2 () {
+            console.log('step2');
+            $('#step1, #step3').hide();
+            $('#step2').show();
+            $('#join-room').focus();
+            join();
+        }
+        function step3Sfu (room) {
+            console.log('step3');
+            // Wait for stream on the call, then set peer video display
+
+            room.on('stream', function(stream){
+                const streamURL = URL.createObjectURL(stream);
+                const peerId = stream.peerId;
+                count++;
+                $('#their-videos').append($(
+                        '<div>' +
+                        '<label id="label_' + peerId + '">' + count + '</label>' +
+                        '<video autoplay class="remoteVideos" src="' + streamURL + '" id="video_' + peerId + '">' +
+                        '</div>'));
+            });
+
+            room.on('removeStream', function(removedStream) {
+                $('#video_' + removedStream.peerId).remove();
+                $('#label_' + removedStream.peerId).remove();
+            });
+
+            // UI stuff
+            room.on('close', step2);
+
+            room.call(window.localStream);
+
+            $('#step1, #step2').hide();
+            $('#step3').show();
+        }
+        function step3Mesh (room) {
+            console.log('step3');
+            // Wait for stream on the call, then set peer video display
+
+            room.on('call',function(call){
+                call.answer(window.localStream);
+            });
+            room.on('stream', function(stream){
+                const streamURL = URL.createObjectURL(stream);
+                const peerId = stream.peerId;
+                count++;
+                $('#their-videos').append($(
+                        '<div>' +
+                        '<label id="label_' + peerId + '">' + count + '</label>' +
+                        '<video autoplay class="remoteVideos" src="' + streamURL + '" id="video_' + peerId + '">' +
+                        '</div>'));
+            });
+            room.on('peerLeave', function(peerId) {
+                $('#video_' + peerId).remove();
+                $('#label_' + peerId).remove();
+            });
+            // UI stuff
+            room.on('close', step2);
+
+            room.call(window.localStream);
+
+            $('#step1, #step2').hide();
+            $('#step3').show();
+        }
+    </script>
+
+
+</head>
+
+<body>
+
+<h2>SkyWay Video Chat</h2>
+<div id="conf-mode"></div>
+<div id="room-id"></div>
+<div class="pure-g">
+    <!-- Video area -->
+    <div class="pure-u-2-3" id="video-container">
+        <div id="their-videos">
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
