@@ -30,12 +30,12 @@
         var count = 0;
 
         function join() {
-            var confMode = location.pathname.split('/')[1];
+            var confMode = location.pathname.split('/')[2];
             if(confMode !== 'sfu' && confMode !== 'mesh') {
                 confMode = 'mesh';
             }
             $("#conf-mode").text('Conf Mode:' + confMode);
-            var roomName = location.pathname.split('/')[2];
+            var roomName = location.pathname.split('/')[3];
             if (!roomName) {
                 return;
             }
